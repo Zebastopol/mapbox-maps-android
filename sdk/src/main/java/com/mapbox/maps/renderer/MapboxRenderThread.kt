@@ -287,6 +287,7 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
   }
 
   private fun releaseEgl() {
+    println("RenderThread : release egl")
     releaseEglSurface()
     if (eglPrepared) {
       eglCore.release()
@@ -295,6 +296,7 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
   }
 
   private fun releaseEglSurface() {
+    println("RenderThread : release egl surface")
     widgetTextureRenderer.release()
     eglCore.releaseSurface(eglSurface)
     eglContextCreated = false
@@ -304,6 +306,7 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
   }
 
   private fun releaseAll() {
+    println("RenderThread : release all")
     renderDestroyCallChain = true
     mapboxRenderer.destroyRenderer()
     renderDestroyCallChain = false
@@ -325,6 +328,7 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
       // at least on Android 8 devices we create surface before Activity#onStart
       // so we need to proceed to EGL creation in any case to avoid deadlock
       if (!creatingSurface) {
+        println("renderNotSupported || paused and !creatingSurface, EXIT!")
         return
       }
     }
@@ -343,6 +347,7 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
 
   @UiThread
   fun onSurfaceSizeChanged(width: Int, height: Int) {
+    println("RenderThread : surface size change $width $height")
     if (this.width != width || this.height != height) {
       renderHandlerThread.post {
         this.width = width
@@ -355,6 +360,7 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
 
   @UiThread
   fun onSurfaceDestroyed() {
+    println("RenderThread : surface destroyed")
     lock.withLock {
       // in some situations `destroy` is called earlier than onSurfaceDestroyed - in that case no need to clean up
       if (renderHandlerThread.started) {
@@ -403,6 +409,7 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
 
   @UiThread
   fun onSurfaceCreated(surface: Surface, width: Int, height: Int) {
+    println("RenderThread : surface created $width $height")
     lock.withLock {
       renderHandlerThread.post {
         processAndroidSurface(surface, width, height)
@@ -449,6 +456,8 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
       if (renderEvent.eventType == EventType.SDK) {
         if (renderThreadPrepared) {
           postNonRenderEvent(renderEvent)
+        } else {
+          println("Skip non-render event ${renderEvent.runnable}")
         }
       } else {
         postNonRenderEvent(renderEvent)
@@ -460,8 +469,10 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
     // if we already waiting listening for next VSYNC then add runnable to queue to execute
     // after actual drawing otherwise execute asap on render thread
     if (awaitingNextVsync) {
+      println("Add non-render event ${renderEvent.runnable}")
       nonRenderEventQueue.add(renderEvent)
     } else {
+      println("Post non-render event ${renderEvent.runnable}")
       renderHandlerThread.postDelayed(
         {
           if (renderThreadPrepared || renderEvent.eventType == EventType.DESTROY_RENDERER) {
@@ -479,11 +490,13 @@ internal class MapboxRenderThread : Choreographer.FrameCallback {
 
   @UiThread
   fun pause() {
+    println("RenderThread : pause")
     paused = true
   }
 
   @UiThread
   fun resume() {
+    println("RenderThread : resume")
     paused = false
     // schedule render if we resume not after first create (e.g. bring map back to front)
     if (renderThreadPrepared) {

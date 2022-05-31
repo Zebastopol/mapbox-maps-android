@@ -48,6 +48,7 @@ internal abstract class MapboxRenderer : MapClient {
 
   @UiThread
   fun onDestroy() {
+    println("RenderThread : destroy")
     renderThread.destroy()
     renderThread.fpsChangedListener = null
   }
@@ -67,7 +68,12 @@ internal abstract class MapboxRenderer : MapClient {
   override fun scheduleTask(task: Task) {
     renderThread.queueRenderEvent(
       RenderEvent(
-        runnable = { task.run() },
+        runnable = object : Runnable {
+          override fun run() {
+            println("Execute task $task / runnable $this")
+            task.run()
+          }
+        },
         needRender = false,
         eventType = if (renderThread.renderDestroyCallChain) EventType.DESTROY_RENDERER else EventType.SDK
       )

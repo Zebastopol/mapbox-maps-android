@@ -176,16 +176,19 @@ class LocationComponentPluginImpl : LocationComponentPlugin2, LocationConsumer2,
    * Called whenever activity's/fragment's lifecycle is entering a "started" state.
    */
   override fun onStart() {
+    println("Start location component")
     activateLocationComponent()
   }
 
   private fun activateLocationComponent() {
     if (internalSettings.enabled) {
       delegateProvider.getStyle { style ->
+        println("activateLocationComponent ${locationPuckManager?.isLayerInitialised()} && $isLocationComponentActivated")
         if (locationPuckManager?.isLayerInitialised() == true && isLocationComponentActivated) {
           return@getStyle
         }
         if (locationPuckManager == null) {
+          println("Create LocationPuckManager")
           locationPuckManager = LocationPuckManager(
             settings = internalSettings,
             settings2 = internalSettings2,
@@ -215,12 +218,16 @@ class LocationComponentPluginImpl : LocationComponentPlugin2, LocationConsumer2,
    * Called whenever activity's/fragment's lifecycle is entering a "stopped" state.
    */
   override fun onStop() {
+    println("Stop location component")
+//    locationPuckManager?.cleanUp()
+//    locationPuckManager = null
     isLocationComponentActivated = false
     locationPuckManager?.onStop()
     locationProvider?.unRegisterLocationConsumer(this)
   }
 
   private fun deactivateLocationComponent() {
+    println("Deactivate location component")
     locationPuckManager?.cleanUp()
     locationPuckManager = null
     locationProvider?.unRegisterLocationConsumer(this)

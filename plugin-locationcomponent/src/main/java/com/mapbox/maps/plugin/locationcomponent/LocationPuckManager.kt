@@ -83,6 +83,7 @@ internal class LocationPuckManager(
   }
 
   fun initialize(style: StyleInterface) {
+    println("Initialize LocationPuckManager ${!locationLayerRenderer.isRendererInitialised()}")
     if (!locationLayerRenderer.isRendererInitialised()) {
       animationManager.setUpdateListeners(
         onLocationUpdated,
@@ -108,6 +109,7 @@ internal class LocationPuckManager(
   }
 
   fun cleanUp() {
+    println("Cleanup LocationPuckManager")
     hide()
     animationManager.onStop()
     locationLayerRenderer.clearBitmaps()
